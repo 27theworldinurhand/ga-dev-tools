@@ -34,7 +34,7 @@ import { Url, StorageKey } from "../../constants"
 import Layout from "../../components/layout"
 import CopyButton from "../../components/CopyButton"
 import BitlyLogo from "-!svg-react-loader!../../images/bitly-logo.svg"
-import { extractParamsFromWebsiteUrl } from "./_params"
+import { extractParamsFromWebsiteUrl, websiteUrlFor } from "./_params"
 
 const iosCampaignTracking = (
   <a href={Url.iosCampaignTracking}>iOS Campaign Tracking URL Builder</a>
@@ -252,16 +252,19 @@ const GeneratedUrl: React.FC<GeneratedUrlProps> = ({
       setGeneratedUrl("")
       return
     }
-    const params = new URLSearchParams()
-    source !== "" && params.set("utm_source", source)
-    medium !== "" && params.set("utm_medium", medium)
-    campaign !== "" && params.set("utm_campaign", campaign)
-    term !== "" && params.set("utm_term", term)
-    content !== "" && params.set("utm_content", content)
-
-    const asString = `${useFragment ? "#" : "?"}${params.toString()}`
-    const newUrl = `${websiteUrl}${asString}`
-    setGeneratedUrl(newUrl)
+    setGeneratedUrl(
+      websiteUrlFor(
+        websiteUrl,
+        {
+          utm_source: source || undefined,
+          utm_medium: medium || undefined,
+          utm_campaign: campaign || undefined,
+          utm_term: term || undefined,
+          utm_content: content || undefined,
+        },
+        useFragment
+      )
+    )
   }, [
     hasAllRequired,
     useFragment,

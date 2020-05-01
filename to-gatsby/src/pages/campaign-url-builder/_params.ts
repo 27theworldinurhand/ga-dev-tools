@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-interface CampaignParams {
+export interface CampaignParams {
   utm_source: string
   utm_medium: string
   utm_campaign: string
@@ -52,7 +52,9 @@ export const extractParamsFromWebsiteUrl = (
   const campaignParams: Partial<CampaignParams> = {}
 
   let fragment = asUrl.hash
-  // Some of the urls we see have fragment, then query params
+  // Some of the urls we see have fragment, then query params. We support
+  // parsing this out, but we do not support keeping it this way in the
+  // generated url.
 
   const queryIndex = fragment.indexOf("?")
   if (queryIndex !== -1) {
@@ -68,15 +70,80 @@ export const extractParamsFromWebsiteUrl = (
   // Pull out any campaign params that are valid search params
   CampiagnParams.forEach(param => {
     const fromSearch = searchParams.get(param)
-    if (fromSearch !== null) {
+    if (fromSearch !== null && fromSearch !== "") {
       campaignParams[param] = fromSearch
     }
 
     const fromFragment = fragmentParams.get(param)
-    if (fromFragment !== null) {
+    if (fromFragment !== null && fromFragment !== "") {
       campaignParams[param] = fromFragment
     }
   })
 
   return campaignParams
+}
+
+export const websiteUrlFor = (
+  original: string,
+  params: Partial<CampaignParams>,
+  useFragment: boolean = false
+): string => {
+  let copyOfOriginal = original
+
+  const fragmentIndex = copyOfOriginal.indexOf("#")
+  let fragmentString = ""
+  let fragmentParams = new URLSearchParams()
+  if (fragmentIndex !== -1) {
+    fragmentString = copyOfOriginal.substring(fragmentIndex)
+    if (fragmentString.indexOf("=") !== -1) {
+      fragmentParams = new URLSearchParams(fragmentString.substring(1))
+    }
+    copyOfOriginal = copyOfOriginal.substring(0, fragmentIndex)
+  }
+
+  const queryIndex = copyOfOriginal.indexOf("?")
+  let queryString = ""
+  let queryParams = new URLSearchParams()
+  if (queryIndex !== -1) {
+    queryString = copyOfOriginal.substring(queryIndex)
+    queryParams = new URLSearchParams(queryString)
+    copyOfOriginal = copyOfOriginal.substring(0, queryIndex)
+  }
+
+  // Delete the campaign params from their parameters
+  CampiagnParams.forEach(param => {
+    queryParams.delete(param)
+    fragmentParams.delete(param)
+  })
+
+  const forOurParams = useFragment === true ? fragmentParams : queryParams
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined) {
+      return
+    }
+    forOurParams.set(key, value)
+  })
+
+  let fragment = ""
+  if (fragmentString !== "" || useFragment) {
+    let asParams = fragmentParams.toString()
+    if (asParams === "") {
+      if (fragmentString.indexOf("=") === -1) {
+        fragment = fragmentString
+      }
+    } else {
+      fragment = `#${asParams}`
+    }
+  }
+
+  let query = ""
+  if (queryString !== "" || !useFragment) {
+    let asParams = queryParams.toString()
+    if (asParams !== "") {
+      query = `?${asParams}`
+    } else {
+    }
+  }
+
+  return `${copyOfOriginal}${query}${fragment}`
 }
