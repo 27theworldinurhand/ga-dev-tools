@@ -376,13 +376,11 @@ export const CampaignUrlBuilder = () => {
     const extractedParams = extractParamsFromWebsiteUrl(e.target.value)
     if (extractedParams !== undefined) {
       const {
-        campaignParams: {
-          utm_source,
-          utm_medium,
-          utm_campaign,
-          utm_term,
-          utm_content,
-        },
+        utm_source,
+        utm_medium,
+        utm_campaign,
+        utm_term,
+        utm_content,
       } = extractedParams
       utm_source !== undefined && setSource(utm_source)
       utm_medium !== undefined && setMedium(utm_medium)

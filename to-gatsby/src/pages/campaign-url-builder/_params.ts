@@ -35,27 +35,30 @@ export const CampiagnParams: (keyof CampaignParams)[] = [
 
 export const extractParamsFromWebsiteUrl = (
   websiteUrl: string
-): ParsedCampaignUrl | undefined => {
+): Partial<CampaignParams> | undefined => {
   // Also support fragment params.
-  let cleanedWebsiteUrl = websiteUrl
   let asUrl: URL
   try {
-    asUrl = new URL(websiteUrl)
+    let missingProtocol = /[^://].*?.com/
+    if (missingProtocol.test(websiteUrl)) {
+      asUrl = new URL(`https://${websiteUrl}`)
+    } else {
+      asUrl = new URL(websiteUrl)
+    }
   } catch (e) {
     return undefined
   }
   const searchParams = asUrl.searchParams
-  let searchFirst = true
   const campaignParams: Partial<CampaignParams> = {}
 
   let fragment = asUrl.hash
   // Some of the urls we see have fragment, then query params
+
   const queryIndex = fragment.indexOf("?")
   if (queryIndex !== -1) {
     const afterFragment = new URLSearchParams(fragment.substring(queryIndex))
     fragment = fragment.substring(0, queryIndex)
     afterFragment.forEach((v, k) => {
-      searchFirst = false
       searchParams.set(k, v)
     })
   }
@@ -75,34 +78,5 @@ export const extractParamsFromWebsiteUrl = (
     }
   })
 
-  // Remove any campaign params from the base url
-  CampiagnParams.forEach(param => {
-    searchParams.delete(param)
-    fragmentParams.delete(param)
-  })
-
-  let cleanedSearchParams = searchParams.toString()
-  if (cleanedSearchParams !== "") {
-    cleanedSearchParams = "?" + cleanedSearchParams
-  }
-  let cleanedFragmentParams = fragmentParams.toString()
-  if (cleanedFragmentParams !== "") {
-    cleanedFragmentParams = "#" + cleanedFragmentParams
-  }
-
-  let pathName = asUrl.pathname
-  if (
-    websiteUrl.replace(asUrl.origin, "")[0] !== "/" &&
-    asUrl.pathname === "/"
-  ) {
-    pathName = ""
-  }
-
-  // Keep the order the user defined, even if it's weird.
-  let first = searchFirst ? cleanedSearchParams : cleanedFragmentParams
-  let second = searchFirst ? cleanedFragmentParams : cleanedSearchParams
-
-  cleanedWebsiteUrl = `${asUrl.origin}${pathName}${first}${second}`
-
-  return { campaignParams, cleanedWebsiteUrl }
+  return campaignParams
 }
