@@ -34,6 +34,7 @@ import { Url, StorageKey } from "../../constants"
 import Layout from "../../components/layout"
 import CopyButton from "../../components/CopyButton"
 import BitlyLogo from "-!svg-react-loader!../../images/bitly-logo.svg"
+import { extractParamsFromWebsiteUrl } from "./_params"
 
 const iosCampaignTracking = (
   <a href={Url.iosCampaignTracking}>iOS Campaign Tracking URL Builder</a>
@@ -371,6 +372,27 @@ export const CampaignUrlBuilder = () => {
     ""
   )
 
+  const onWebsiteChange = React.useCallback(e => {
+    const extractedParams = extractParamsFromWebsiteUrl(e.target.value)
+    if (extractedParams !== undefined) {
+      const {
+        campaignParams: {
+          utm_source,
+          utm_medium,
+          utm_campaign,
+          utm_term,
+          utm_content,
+        },
+      } = extractedParams
+      utm_source !== undefined && setSource(utm_source)
+      utm_medium !== undefined && setMedium(utm_medium)
+      utm_campaign !== undefined && setCampaign(utm_campaign)
+      utm_term !== undefined && setTerm(utm_term)
+      utm_content !== undefined && setContent(utm_content)
+    }
+    setWebsiteUrl(e.target.value)
+  }, [])
+
   return (
     <>
       <Typography variant="body1">
@@ -385,7 +407,7 @@ export const CampaignUrlBuilder = () => {
           id="website-url"
           required
           value={websiteUrl}
-          onChange={e => setWebsiteUrl(e.target.value)}
+          onChange={onWebsiteChange}
           label="Website URL"
           helperText={
             <span>

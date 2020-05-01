@@ -35,10 +35,15 @@ export const CampiagnParams: (keyof CampaignParams)[] = [
 
 export const extractParamsFromWebsiteUrl = (
   websiteUrl: string
-): ParsedCampaignUrl => {
+): ParsedCampaignUrl | undefined => {
   // Also support fragment params.
   let cleanedWebsiteUrl = websiteUrl
-  const asUrl = new URL(websiteUrl)
+  let asUrl: URL
+  try {
+    asUrl = new URL(websiteUrl)
+  } catch (e) {
+    return undefined
+  }
   const searchParams = asUrl.searchParams
   let searchFirst = true
   const campaignParams: Partial<CampaignParams> = {}
